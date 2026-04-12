@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
 import subprocess
 
-# query pipewire for system audio configuration
-rawOutput = subprocess.run(["pw-cli", "info", "0"], capture_output=True, text=True).stdout
-outputLines = rawOutput.splitlines()
+def getAudioInfo():
+    # query pipewire for system audio configuration
+    rawOutput = subprocess.run(["pw-cli", "info", "0"], capture_output=True, text=True).stdout
+    outputLines = rawOutput.splitlines()
 
-# extract sample rate and buffer size from output
-clockInfo = []
-for line in outputLines:
-    if 'default.clock.rate ' in line or 'default.clock.quantum ' in line:
-        parsedArray = line.split()
-        clockInfo.append(int(parsedArray[-1][1:-1]))
+     # extract sample rate and buffer size from output
+    clockInfo = []
+    for line in outputLines:
+        if 'default.clock.rate ' in line or 'default.clock.quantum ' in line:
+            parsedArray = line.split()
+            clockInfo.append(int(parsedArray[-1][1:-1]))
 
-sampleRate = clockInfo[0]
-bufferSize = clockInfo[1]
+    sampleRate = clockInfo[0]
+    bufferSize = clockInfo[1]
 
-# formula: (buffer / sample rate) * 1000 = latency in ms
-audioLatency = round((bufferSize / sampleRate) * 1000, 2)
+    # formula: (buffer / sample rate) * 1000 = latency in ms
+    audioLatency = round((bufferSize / sampleRate) * 1000, 2)
 
-print(f"Sample rate:  {sampleRate} hz")
-print(f"Buffer size:  {bufferSize}")
-print(f"Audio Latency:  {audioLatency}ms")
+    print("[AUDIO]")
+    print(f" Sample rate:  {sampleRate} hz")
+    print(f" Buffer size:  {bufferSize}")
+    print(f" Audio Latency:  {audioLatency}ms")
+
+
+getAudioInfo()
