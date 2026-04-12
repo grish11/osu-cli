@@ -1,6 +1,6 @@
-#osu-cli tool
+# osu-cli tool
 
-##how to install
+## how to install
 
 run the following commands in order
 
