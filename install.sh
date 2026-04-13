@@ -2,7 +2,8 @@
 
 echo "installing chopped latency-checker..."
 
-# copy the script into ~/.local/bin, then remove 
+# creating folder, move the script into ~/.local/bin, then remove 
+mkdir -p ~/.local/bin
 mv latency-check ~/.local/bin/latency-check
 chmod +x ~/.local/bin/latency-check
 
