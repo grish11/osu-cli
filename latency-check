@@ -77,11 +77,64 @@ def getKernelInfo():
     else:
         print(f" Kernel: {kernelType}  ** consider a realtime or gaming kernel")
 
+def getOsuSettings():
+    # read osu framework and game config files
+    with open(os.path.expanduser("~/.local/share/osu/framework.ini"), "r") as frameworkIniFile:
+        frameworkLines = frameworkIniFile.read().splitlines()
+    with open(os.path.expanduser("~/.local/share/osu/game.ini"), "r") as gameIniFile:
+        gameLines = gameIniFile.read().splitlines()
+
+    # parse settings from framework.ini
+    frameSync = windowMode = renderer = executionMode = "unknown"
+    for line in frameworkLines:
+        parts = line.split(" = ")
+        if len(parts) == 2:
+            key, value = parts[0].strip(), parts[1].strip()
+            if key == "FrameSync":       
+                frameSync = value
+            elif key == "WindowMode":    
+                windowMode = value
+            elif key == "Renderer":      
+                renderer = value
+            elif key == "ExecutionMode": 
+                executionMode = value
+
+    # parse audio offset from game.ini
+    audioOffset = "unknown"
+    for line in gameLines:
+        parts = line.split(" = ")
+        if len(parts) == 2:
+            key, value = parts[0].strip(), parts[1].strip()
+            if key == "AudioOffset": 
+                audioOffset = value
+
+    print("[OSU]")
+
+    if frameSync == "Unlimited":
+        print(f" Frame sync:      {frameSync}")
+    else:
+        print(f" Frame sync:      {frameSync}  ** set to Unlimited for lowest latency")
+
+    if windowMode == "Fullscreen":
+        print(f" Window mode:     {windowMode}")
+    else:
+        print(f" Window mode:     {windowMode}  ** fullscreen has lower latency")
+
+    if executionMode == "MultiThreaded":
+        print(f" Execution mode:  {executionMode}")
+    else:
+        print(f" Execution mode:  {executionMode}  ** MultiThreaded reduces audio latency")
+
+    print(f" Renderer:        {renderer}")
+    print(f" Audio offset:    {audioOffset}ms")
+
+
 
 # function calls 
 getAudioInfo()
 print()
 getCpuGovernor()
-getCompositor()
-getKernelInfo()
+getCompositor() 
+getKernelInfo() 
 print()
+getOsuSettings()

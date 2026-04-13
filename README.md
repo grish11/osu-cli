@@ -1,13 +1,25 @@
-# osu-cli tool
+# osu-cli
 
-## how to install
+A CLI latency checker for osu!lazer on Linux.
+Reads your system and osu! settings to surface latency issues in one place.
 
-run the following commands in order
+## Dependencies
 
+- osu!lazer (not stable)
+- Python 3
+- pipewire + pw-cli
+- Linux (Fedora first, Ubuntu/Debian and Arch/NixOS coming soon)
+
+## Install
 
 ```bash
 git clone https://github.com/grish11/osu-cli
 cd osu-cli
 bash install.sh
 ```
-** bash install.sh works regardless of shell
+
+## Usage
+
+```bash
+latency-check
+```
