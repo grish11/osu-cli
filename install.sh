@@ -3,8 +3,7 @@
 echo "installing chopped latency-checker..."
 
 # copy the script into ~/.local/bin, then remove 
-cp latency-check ~/.local/bin/latency-check
-rm latency-check
+mv latency-check ~/.local/bin/latency-check
 chmod +x ~/.local/bin/latency-check
 
 # based on shell, add ~/.local/bin in PATH if not in PATH
