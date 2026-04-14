@@ -6,10 +6,12 @@ import shutil
 print()
 print('=== osu!lazer latency check ===\n')
 
+# --------------------------------------------------------------------------------------------------------------------
 def checkDependencies():
     pass
 
 
+# --------------------------------------------------------------------------------------------------------------------
 def getAudioInfo():
     print("[AUDIO]")
     pwCliPresent = shutil.which('pw-cli')
@@ -36,6 +38,7 @@ def getAudioInfo():
         print(' ERROR: pw-cli not found — cannot read audio configuration')
         print(' ERROR INFO: install pipewire-utils or make sure pw-cli is in your PATH')
 
+# --------------------------------------------------------------------------------------------------------------------
 def getCpuGovernor():
     print("[SYSTEM]")
     try:
@@ -50,6 +53,7 @@ def getCpuGovernor():
         print(' ERROR: CPU governor info not found')
         print(' ERROR INFO: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor does not exist on this system')
 
+# --------------------------------------------------------------------------------------------------------------------
 def getCompositor():
     compositor = (os.environ.get('XDG_CURRENT_DESKTOP') or
                   os.environ.get('DESKTOP_SESSION') or
@@ -64,6 +68,7 @@ def getCompositor():
 
     print(f" Compositor:   {compositor} ({displayServer})  ** adds frame latency")
 
+# --------------------------------------------------------------------------------------------------------------------
 def getKernelInfo():
     isOptimal = False
     distro = "unknown"
@@ -102,6 +107,7 @@ def getKernelInfo():
         print(' ERROR: uname not found — cannot detect kernel')
         print(' ERROR INFO: uname should be present on all Linux systems, something is very wrong')
 
+# --------------------------------------------------------------------------------------------------------------------
 def getOsuSettings():
     print('[OSU]')
     try:
@@ -161,7 +167,18 @@ def getOsuSettings():
     print(f" Renderer:        {renderer}")
     print(f" Audio offset:    {audioOffset}ms")
 
+# --------------------------------------------------------------------------------------------------------------------
+def getInputDevices():
+    try:
+        with open("/proc/bus/input/devices", "r") as devicesFile:
+            devicesLines = devicesFile.read().strip('\n\n')
+    except FileNotFoundError:
+        print(' ERROR: devices file should be present on ')
+        print(' ERROR INFO: expected /proc/bus/input/devices"') # make these two error msg better
+        return
 
+
+# --------------------------------------------------------------------------------------------------------------------
 # function calls
 checkDependencies()
 getAudioInfo()
