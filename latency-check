@@ -1,52 +1,60 @@
 #!/usr/bin/env python3
 import subprocess
 import os
+import shutil
 
 print()
 print('=== osu!lazer latency check ===\n')
 
+def checkDependencies():
+    pass
+
+
 def getAudioInfo():
-    # query pipewire for system audio configuration
-    rawOutput = subprocess.run(["pw-cli", "info", "0"], capture_output=True, text=True).stdout
-    outputLines = rawOutput.splitlines()
-
-    # extract sample rate and buffer size from output
-    clockInfo = []
-    for line in outputLines:
-        if 'default.clock.rate ' in line or 'default.clock.quantum ' in line:
-            parsedArray = line.split()
-            clockInfo.append(int(parsedArray[-1][1:-1]))
-
-    sampleRate = clockInfo[0]
-    bufferSize = clockInfo[1]
-
-    # formula: (buffer / sample rate) * 1000 = latency in ms
-    audioLatency = round((bufferSize / sampleRate) * 1000, 2)
-
     print("[AUDIO]")
-    print(f" Sample rate:   {sampleRate} hz")
-    print(f" Buffer size:   {bufferSize}")
-    print(f" Audio latency: {audioLatency}ms")
+    pwCliPresent = shutil.which('pw-cli')
+    if pwCliPresent:
+        rawOutput = subprocess.run(["pw-cli", "info", "0"], capture_output=True, text=True).stdout
+        outputLines = rawOutput.splitlines()
+
+        clockInfo = []
+        for line in outputLines:
+            if 'default.clock.rate ' in line or 'default.clock.quantum ' in line:
+                parsedArray = line.split()
+                clockInfo.append(int(parsedArray[-1][1:-1]))
+
+        sampleRate = clockInfo[0]
+        bufferSize = clockInfo[1]
+
+        # formula: (buffer / sample rate) * 1000 = latency in ms
+        audioLatency = round((bufferSize / sampleRate) * 1000, 2)
+
+        print(f" Sample rate:   {sampleRate} hz")
+        print(f" Buffer size:   {bufferSize}")
+        print(f" Audio latency: {audioLatency}ms")
+    else:
+        print(' ERROR: pw-cli not found — cannot read audio configuration')
+        print(' ERROR INFO: install pipewire-utils or make sure pw-cli is in your PATH')
 
 def getCpuGovernor():
-    # read cpu frequency scaling governor from sysfs
-    with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r") as cpuFile:
-        governor = cpuFile.read().strip()
-
-    # warn if not set to performance mode
     print("[SYSTEM]")
-    if governor == "performance":
-        print(f" CPU governor: {governor}")
-    else:
-        print(f" CPU governor: {governor}  ** use 'performance' for lower latency")
+    try:
+        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r") as cpuFile:
+            governor = cpuFile.read().strip()
+
+        if governor == "performance":
+            print(f" CPU governor: {governor}")
+        else:
+            print(f" CPU governor: {governor}  ** set to 'performance' for lower latency")
+    except FileNotFoundError:
+        print(' ERROR: CPU governor info not found')
+        print(' ERROR INFO: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor does not exist on this system')
 
 def getCompositor():
-    # check multiple env variables since WMs may not set XDG_CURRENT_DESKTOP
     compositor = (os.environ.get('XDG_CURRENT_DESKTOP') or
                   os.environ.get('DESKTOP_SESSION') or
                   'unknown')
 
-    # detect display server
     if os.environ.get('WAYLAND_DISPLAY'):
         displayServer = 'Wayland'
     elif os.environ.get('DISPLAY'):
@@ -54,61 +62,86 @@ def getCompositor():
     else:
         displayServer = 'unknown'
 
-    # compositors always add frame latency
     print(f" Compositor:   {compositor} ({displayServer})  ** adds frame latency")
 
 def getKernelInfo():
-    kernelInfo = subprocess.run(["uname", "-r"], capture_output=True, text=True).stdout.strip()
-    kernelType = "standard"
     isOptimal = False
+    distro = "unknown"
 
-    if "rt" in kernelInfo:
-        kernelType = "realtime"
-        isOptimal = True
-    elif "bazzite" in kernelInfo:
-        kernelType = "bazzite"
-        isOptimal = True
-    elif "cachy" in kernelInfo:
-        kernelType = "cachy"
-        isOptimal = True
+    try:
+        with open("/etc/os-release", "r") as distroInfoFile:
+            distroInfoLines = distroInfoFile.read().splitlines()
+            for line in distroInfoLines:
+                parts = line.split("=")
+                if len(parts) == 2:
+                    key, value = parts[0].strip(), parts[1].strip()
+                    if key == "ID":
+                        distro = value
+        if distro == "bazzite":
+            isOptimal = True
+    except FileNotFoundError:
+        print(' ERROR: /etc/os-release not found — cannot detect distro')
 
-    if isOptimal:
-        print(f" Kernel: {kernelType}")
+    unamePresent = shutil.which('uname')
+    if unamePresent:
+        kernelVersion = subprocess.run(["uname", "-r"], capture_output=True, text=True).stdout.strip()
+        kernelType = "standard"
+
+        if "rt" in kernelVersion:
+            kernelType = "realtime"
+            isOptimal = True
+        elif "cachyos" in kernelVersion:
+            kernelType = "cachyos"
+            isOptimal = True
+
+        if isOptimal:
+            print(f" Kernel: {kernelType} ({kernelVersion})")
+        else:
+            print(f" Kernel: {kernelType} ({kernelVersion})  ** consider a gaming kernel like cachyos or bazzite")
     else:
-        print(f" Kernel: {kernelType}  ** consider a realtime or gaming kernel")
+        print(' ERROR: uname not found — cannot detect kernel')
+        print(' ERROR INFO: uname should be present on all Linux systems, something is very wrong')
 
 def getOsuSettings():
-    # read osu framework and game config files
-    with open(os.path.expanduser("~/.local/share/osu/framework.ini"), "r") as frameworkIniFile:
-        frameworkLines = frameworkIniFile.read().splitlines()
-    with open(os.path.expanduser("~/.local/share/osu/game.ini"), "r") as gameIniFile:
-        gameLines = gameIniFile.read().splitlines()
+    print('[OSU]')
+    try:
+        with open(os.path.expanduser("~/.local/share/osu/framework.ini"), "r") as frameworkIniFile:
+            frameworkLines = frameworkIniFile.read().splitlines()
+    except FileNotFoundError:
+        print(' ERROR: framework.ini not found — is osu!lazer installed?')
+        print(' ERROR INFO: expected at ~/.local/share/osu/framework.ini')
+        return
 
-    # parse settings from framework.ini
+    try:
+        with open(os.path.expanduser("~/.local/share/osu/game.ini"), "r") as gameIniFile:
+            gameLines = gameIniFile.read().splitlines()
+    except FileNotFoundError:
+        print(' ERROR: game.ini not found — is osu!lazer installed?')
+        print(' ERROR INFO: expected at ~/.local/share/osu/game.ini')
+        return
+
     frameSync = windowMode = renderer = executionMode = "unknown"
     for line in frameworkLines:
         parts = line.split(" = ")
         if len(parts) == 2:
             key, value = parts[0].strip(), parts[1].strip()
-            if key == "FrameSync":       
+            if key == "FrameSync":
                 frameSync = value
-            elif key == "WindowMode":    
+            elif key == "WindowMode":
                 windowMode = value
-            elif key == "Renderer":      
+            elif key == "Renderer":
                 renderer = value
-            elif key == "ExecutionMode": 
+            elif key == "ExecutionMode":
                 executionMode = value
 
-    # parse audio offset from game.ini
     audioOffset = "unknown"
     for line in gameLines:
         parts = line.split(" = ")
         if len(parts) == 2:
             key, value = parts[0].strip(), parts[1].strip()
-            if key == "AudioOffset": 
+            if key == "AudioOffset":
                 audioOffset = value
 
-    print("[OSU]")
 
     if frameSync == "Unlimited":
         print(f" Frame sync:      {frameSync}")
@@ -118,23 +151,23 @@ def getOsuSettings():
     if windowMode == "Fullscreen":
         print(f" Window mode:     {windowMode}")
     else:
-        print(f" Window mode:     {windowMode}  ** fullscreen has lower latency")
+        print(f" Window mode:     {windowMode}  ** fullscreen reduces latency")
 
     if executionMode == "MultiThreaded":
         print(f" Execution mode:  {executionMode}")
     else:
-        print(f" Execution mode:  {executionMode}  ** MultiThreaded reduces audio latency")
+        print(f" Execution mode:  {executionMode}  ** set to MultiThreaded to reduce audio latency")
 
     print(f" Renderer:        {renderer}")
     print(f" Audio offset:    {audioOffset}ms")
 
 
-
-# function calls 
+# function calls
+checkDependencies()
 getAudioInfo()
 print()
 getCpuGovernor()
-getCompositor() 
-getKernelInfo() 
+getCompositor()
+getKernelInfo()
 print()
 getOsuSettings()
