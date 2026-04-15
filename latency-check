@@ -171,11 +171,37 @@ def getOsuSettings():
 def getInputDevices():
     try:
         with open("/proc/bus/input/devices", "r") as devicesFile:
-            devicesLines = devicesFile.read().strip('\n\n')
+            deviceList = devicesFile.read().split('\n\n')
     except FileNotFoundError:
         print(' ERROR: devices file should be present on ')
         print(' ERROR INFO: expected /proc/bus/input/devices"') # make these two error msg better
         return
+
+    for block in deviceList:
+        name = ""
+        handlers = ""
+        isUSB = False
+
+        for line in block.splitlines():
+            if line.startswith('I:') and 'Bus=0003' in line:
+                isUSB = True
+            if line.startswith('N:'):
+                name = line[9:-1] 
+                print(name)
+            if line.startswith('H:'):
+                handlers = line[12:-1]
+                print(handlers)
+
+        if isUSB:
+            if 'mouse' in handlers and 'kbd' not in handlers:
+                print(f" Mouse:    {name}")
+            elif 'kbd' in handlers and 'leds' in handlers:
+                print(f" Keyboard: {name}")
+
+
+
+
+
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -188,3 +214,4 @@ getCompositor()
 getKernelInfo()
 print()
 getOsuSettings()
+getInputDevices()
