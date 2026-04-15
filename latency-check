@@ -168,7 +168,10 @@ def getOsuSettings():
     print(f" Audio offset:    {audioOffset}ms")
 
 # --------------------------------------------------------------------------------------------------------------------
-def getInputDevices():
+
+# might or not impl later
+
+"""def getInputDevices():
     try:
         with open("/proc/bus/input/devices", "r") as devicesFile:
             deviceList = devicesFile.read().split('\n\n')
@@ -197,10 +200,7 @@ def getInputDevices():
                 print(f" Mouse:    {name}")
             elif 'kbd' in handlers and 'leds' in handlers:
                 print(f" Keyboard: {name}")
-
-
-
-
+"""
 
 
 
