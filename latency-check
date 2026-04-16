@@ -38,6 +38,7 @@ def getAudioInfo():
         print(' ERROR: pw-cli not found — cannot read audio configuration')
         print(' ERROR INFO: install pipewire-utils or make sure pw-cli is in your PATH')
 
+
 # --------------------------------------------------------------------------------------------------------------------
 def getCpuGovernor():
     print("[SYSTEM]")
@@ -46,12 +47,13 @@ def getCpuGovernor():
             governor = cpuFile.read().strip()
 
         if governor == "performance":
-            print(f" CPU governor: {governor}")
+            print(f" CPU governor:  {governor}")
         else:
-            print(f" CPU governor: {governor}  ** set to 'performance' for lower latency")
+            print(f" CPU governor:  {governor}  ** set to 'performance' for lower latency")
     except FileNotFoundError:
         print(' ERROR: CPU governor info not found')
         print(' ERROR INFO: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor does not exist on this system')
+
 
 # --------------------------------------------------------------------------------------------------------------------
 def getCompositor():
@@ -66,7 +68,8 @@ def getCompositor():
     else:
         displayServer = 'unknown'
 
-    print(f" Compositor:   {compositor} ({displayServer})  ** adds frame latency")
+    print(f" Compositor:    {compositor} ({displayServer})  ** adds frame latency")
+
 
 # --------------------------------------------------------------------------------------------------------------------
 def getKernelInfo():
@@ -100,12 +103,72 @@ def getKernelInfo():
             isOptimal = True
 
         if isOptimal:
-            print(f" Kernel: {kernelType} ({kernelVersion})")
+            print(f" Kernel:        {kernelType} ({kernelVersion})")
         else:
-            print(f" Kernel: {kernelType} ({kernelVersion})  ** consider a gaming kernel like cachyos or bazzite")
+            print(f" Kernel:        {kernelType} ({kernelVersion})  ** consider a gaming kernel like cachyos or bazzite")
     else:
         print(' ERROR: uname not found — cannot detect kernel')
         print(' ERROR INFO: uname should be present on all Linux systems, something is very wrong')
+
+
+# --------------------------------------------------------------------------------------------------------------------
+def getRtkitStatus():
+    systemctlPresent = shutil.which('systemctl')
+    if not systemctlPresent:
+        print(' rtkit:         ERROR: systemctl not found — cannot check rtkit status')
+        return
+
+    checkRtkit = subprocess.run(["systemctl", "is-active", "rtkit-daemon"], capture_output=True, text=True).stdout.strip()
+    if checkRtkit != 'active':
+        print(' rtkit:         not running  ** audio threads wont get realtime priority')
+        return
+
+    pgrepPresent = shutil.which('pgrep')
+    if not pgrepPresent:
+        print(' rtkit:         ERROR: pgrep not found — cannot find PipeWire process')
+        return
+
+    # PID of pipewire
+    processIDPipeWire = subprocess.run(["pgrep", "-x", "pipewire"], capture_output=True, text=True).stdout.strip()
+
+    if not processIDPipeWire:
+        print(' rtkit:         ERROR: PipeWire process not found')
+        return
+
+    chrtPresent = shutil.which('chrt')
+    if not chrtPresent:
+        print(' rtkit:         ERROR: chrt not found — cannot check scheduling policy')
+        return
+
+    # SCHED_FIFO or SCHED_RR = realtime, SCHED_OTHER = normal
+    # NOTE: PipeWire uses realtime on THREADS, not the main process
+    schedulingInfo = subprocess.run(
+        ["ps", "-T", "-p", processIDPipeWire, "-o", "cls,rtprio"],
+        capture_output=True, text=True
+    ).stdout
+
+    rtConfirmed = False
+    for line in schedulingInfo.splitlines():
+        if 'FF' in line or 'RR' in line:
+            rtConfirmed = True
+            break
+
+    if rtConfirmed:
+        print(' rtkit:         active — PipeWire has realtime priority ✓')
+        return
+
+    groupsPresent = shutil.which('groups')
+    whoamiPresent = shutil.which('whoami')
+
+    if groupsPresent and whoamiPresent:
+        checkGroups = subprocess.run(["groups"], capture_output=True, text=True).stdout.strip()
+        checkWhoami = subprocess.run(["whoami"], capture_output=True, text=True).stdout.strip()
+
+        if 'rtkit' in checkGroups:
+            print(' rtkit:         running but PipeWire is not realtime  ** check rtkit-daemon logs')
+            print('                ** ensure audio is playing (e.g. osu!lazer) and try again')
+        else:
+            print(f' rtkit:         user \'{checkWhoami}\' not in rtkit group  ** run: sudo usermod -aG rtkit {checkWhoami}')
 
 # --------------------------------------------------------------------------------------------------------------------
 def getOsuSettings():
@@ -148,7 +211,6 @@ def getOsuSettings():
             if key == "AudioOffset":
                 audioOffset = value
 
-
     if frameSync == "Unlimited":
         print(f" Frame sync:      {frameSync}")
     else:
@@ -167,17 +229,19 @@ def getOsuSettings():
     print(f" Renderer:        {renderer}")
     print(f" Audio offset:    {audioOffset}ms")
 
+
 # --------------------------------------------------------------------------------------------------------------------
 
-# might or not impl later
+# might or not impl later 
 
-"""def getInputDevices():
+"""
+def getInputDevices():
     try:
         with open("/proc/bus/input/devices", "r") as devicesFile:
             deviceList = devicesFile.read().split('\n\n')
     except FileNotFoundError:
         print(' ERROR: devices file should be present on ')
-        print(' ERROR INFO: expected /proc/bus/input/devices"') # make these two error msg better
+        print(' ERROR INFO: expected /proc/bus/input/devices"')
         return
 
     for block in deviceList:
@@ -189,7 +253,7 @@ def getOsuSettings():
             if line.startswith('I:') and 'Bus=0003' in line:
                 isUSB = True
             if line.startswith('N:'):
-                name = line[9:-1] 
+                name = line[9:-1]
                 print(name)
             if line.startswith('H:'):
                 handlers = line[12:-1]
@@ -203,7 +267,6 @@ def getOsuSettings():
 """
 
 
-
 # --------------------------------------------------------------------------------------------------------------------
 # function calls
 checkDependencies()
@@ -212,6 +275,7 @@ print()
 getCpuGovernor()
 getCompositor()
 getKernelInfo()
+getRtkitStatus()
 print()
 getOsuSettings()
-getInputDevices()
+# getInputDevices()
