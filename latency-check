@@ -140,12 +140,9 @@ def getRtkitStatus():
         print(' rtkit:         ERROR: chrt not found — cannot check scheduling policy')
         return
 
-    # SCHED_FIFO or SCHED_RR = realtime, SCHED_OTHER = normal
-    # NOTE: PipeWire uses realtime on THREADS, not the main process
-    schedulingInfo = subprocess.run(
-        ["ps", "-T", "-p", processIDPipeWire, "-o", "cls,rtprio"],
-        capture_output=True, text=True
-    ).stdout
+    # SCHED_FIFO or SCHED_RR = realtime , otherwise SCHED_OTHER = normal
+    # PipeWire uses realtime on THREADS not the main process
+    schedulingInfo = subprocess.run(["ps", "-T", "-p", processIDPipeWire, "-o", "cls,rtprio"], capture_output=True, text=True).stdout
 
     rtConfirmed = False
     for line in schedulingInfo.splitlines():
