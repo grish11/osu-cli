@@ -199,13 +199,14 @@ def getKernelParams():
     else:
         print(f" processor.max_cstate: {maxCstate}")
 
-    clocksource = params.get("clocksource")
-    if clocksource == "tsc":
-        print(" clocksource:   tsc")
-    elif clocksource is None:
-        print(" clocksource:   not set")
-    else:
-        print(f" clocksource:  {clocksource}")
+    try:
+        with open("/sys/devices/system/clocksource/clocksource0/current_clocksource", "r") as clocksourceFile:
+            clocksourceContents = clocksourceFile.read().strip()
+            print(f" active clocksource: {clocksourceContents}")
+    except FileNotFoundError:
+        print(' ERROR: clocksource info not found')
+        print(' ERROR INFO: /sys/devices/system/clocksource/clocksource0/current_clocksource does not exist')
+        return
 
 
 
@@ -265,6 +266,27 @@ def getRtkitStatus():
         else:
             print(f' rtkit:         user \'{checkWhoami}\' not in rtkit group  ** run: sudo usermod -aG rtkit {checkWhoami}')
 
+
+
+# --------------------------------------------------------------------------------------------------------------------
+def getUsbAutosuspend():
+    try:
+        with open("/sys/module/usbcore/parameters/autosuspend", "r") as usbAutosuspendFile:
+            autosuspendTimeout = int(usbAutosuspendFile.read().strip())
+    except FileNotFoundError:
+        print(' ERROR: USB autosuspend info not found')
+        print(' ERROR INFO: /sys/module/usbcore/parameters/autosuspend does not exist')
+        return
+    except ValueError:
+        print(' ERROR: could not parse USB autosuspend value')
+        return
+
+    if autosuspendTimeout == -1:
+        print(" USB autosuspend:      disabled")
+    elif autosuspendTimeout == 0:
+        print(" USB autosuspend:      immediate")
+    else:
+        print(f" USB autosuspend:      {autosuspendTimeout}s")
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -377,6 +399,7 @@ getCompositor()
 getKernelInfo()
 getKernelParams()
 getRtkitStatus()
+getUsbAutosuspend()
 print()
 
 # OSU
