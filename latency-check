@@ -10,6 +10,8 @@ print('=== osu!lazer latency check ===\n')
 def checkDependencies():
     pass
 
+
+
 # --------------------------------------------------------------------------------------------------------------------
 def getAudioInfo():
     print("[AUDIO]")
@@ -73,6 +75,8 @@ def getAudioInfo():
 
     print(" ERROR: no active audio node found")
 
+
+
 # --------------------------------------------------------------------------------------------------------------------
 def getCpuGovernor():
     print("[SYSTEM]")
@@ -89,6 +93,7 @@ def getCpuGovernor():
         print(' ERROR INFO: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor does not exist on this system')
 
 
+
 # --------------------------------------------------------------------------------------------------------------------
 def getCompositor():
     compositor = (os.environ.get('XDG_CURRENT_DESKTOP') or
@@ -103,6 +108,7 @@ def getCompositor():
         displayServer = 'unknown'
 
     print(f" Compositor:    {compositor} ({displayServer})")
+
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -143,6 +149,64 @@ def getKernelInfo():
     else:
         print(' ERROR: uname not found — cannot detect kernel')
         print(' ERROR INFO: uname should be present on all Linux systems, something is very wrong')
+
+
+
+# --------------------------------------------------------------------------------------------------------------------
+def getKernelParams():
+    try:
+        with open("/proc/cmdline", "r") as bootParamsFile:
+            bootParams = bootParamsFile.read().strip()
+    except FileNotFoundError:
+        print(" ERROR: /proc/cmdline not found — cannot read boot parameters")
+        print(" ERROR INFO: this file should exist on all Linux systems")
+        return
+
+    params = {}
+    for item in bootParams.split():
+        if "=" in item:
+            key, value = item.split("=", 1)
+            params[key] = value
+        else:
+            params[item] = True
+
+    if params.get("threadirqs"):
+        print(" threadirqs:    enabled")
+    else:
+        print(" threadirqs:    not set")
+
+    preempt = params.get("preempt")
+    if preempt == "full":
+        print(" preempt:       full")
+    elif preempt is None:
+        print(" preempt:       not set")
+    else:
+        print(f" preempt:      {preempt}")
+
+    mitigations = params.get("mitigations")
+    if mitigations == "off":
+        print(" mitigations:   off")
+    elif mitigations is None:
+        print(" mitigations:   default (on)")
+    else:
+        print(f" mitigations:  {mitigations}")
+
+    maxCstate = params.get("processor.max_cstate")
+    if maxCstate == "1":
+        print(" processor.max_cstate: 1")
+    elif maxCstate is None:
+        print(" processor.max_cstate: not set")
+    else:
+        print(f" processor.max_cstate: {maxCstate}")
+
+    clocksource = params.get("clocksource")
+    if clocksource == "tsc":
+        print(" clocksource:   tsc")
+    elif clocksource is None:
+        print(" clocksource:   not set")
+    else:
+        print(f" clocksource:  {clocksource}")
+
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -200,6 +264,8 @@ def getRtkitStatus():
             print('                ** ensure audio is playing (e.g. osu!lazer) and try again')
         else:
             print(f' rtkit:         user \'{checkWhoami}\' not in rtkit group  ** run: sudo usermod -aG rtkit {checkWhoami}')
+
+
 
 # --------------------------------------------------------------------------------------------------------------------
 def getOsuSettings():
@@ -261,52 +327,60 @@ def getOsuSettings():
     print(f" Audio offset:    {audioOffset}ms")
 
 
+
 # --------------------------------------------------------------------------------------------------------------------
 
 # might or not impl later 
 
-"""
-def getInputDevices():
-    try:
-        with open("/proc/bus/input/devices", "r") as devicesFile:
-            deviceList = devicesFile.read().split('\n\n')
-    except FileNotFoundError:
-        print(' ERROR: devices file should be present on ')
-        print(' ERROR INFO: expected /proc/bus/input/devices"')
-        return
+# def getInputDevices():
+#     try:
+#         with open("/proc/bus/input/devices", "r") as devicesFile:
+#             deviceList = devicesFile.read().split('\n\n')
+#     except FileNotFoundError:
+#         print(' ERROR: devices file should be present on ')
+#         print(' ERROR INFO: expected /proc/bus/input/devices"')
+#         return
+#
+#     for block in deviceList:
+#         name = ""
+#         handlers = ""
+#         isUSB = False
+#
+#         for line in block.splitlines():
+#             if line.startswith('I:') and 'Bus=0003' in line:
+#                 isUSB = True
+#             if line.startswith('N:'):
+#                 name = line[9:-1]
+#                 print(name)
+#             if line.startswith('H:'):
+#                 handlers = line[12:-1]
+#                 print(handlers)
+#
+#         if isUSB:
+#             if 'mouse' in handlers and 'kbd' not in handlers:
+#                 print(f" Mouse:    {name}")
+#             elif 'kbd' in handlers and 'leds' in handlers:
+#                 print(f" Keyboard: {name}") 
 
-    for block in deviceList:
-        name = ""
-        handlers = ""
-        isUSB = False
-
-        for line in block.splitlines():
-            if line.startswith('I:') and 'Bus=0003' in line:
-                isUSB = True
-            if line.startswith('N:'):
-                name = line[9:-1]
-                print(name)
-            if line.startswith('H:'):
-                handlers = line[12:-1]
-                print(handlers)
-
-        if isUSB:
-            if 'mouse' in handlers and 'kbd' not in handlers:
-                print(f" Mouse:    {name}")
-            elif 'kbd' in handlers and 'leds' in handlers:
-                print(f" Keyboard: {name}")
-"""
 
 
 # --------------------------------------------------------------------------------------------------------------------
-# function calls
 checkDependencies()
+
+# AUDIO
 getAudioInfo()
 print()
+
+# SYSTEM 
 getCpuGovernor()
 getCompositor()
 getKernelInfo()
+getKernelParams()
 getRtkitStatus()
 print()
+
+# OSU
 getOsuSettings()
+
+# INPUT
 # getInputDevices()
