@@ -7,13 +7,20 @@ A Textual-based TUI for inspecting audio, system, and osu!lazer latency settings
 - osu!lazer (optional — osu! screen reads its config files)
 
 ## Install
-```
+
+```bash
 git clone https://github.com/grish11/osutop.git
 cd osutop
+```
+
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ## Run
-```python main.py```
+
+```bash
+python main.py
+```
