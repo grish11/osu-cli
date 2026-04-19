@@ -1,4 +1,4 @@
-# osuLatency
+# osutop
 A Textual-based TUI for inspecting audio, system, and osu!lazer latency settings on Linux.
 
 ## Requirements
