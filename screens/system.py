@@ -2,11 +2,15 @@ from textual import work
 from textual.app import ComposeResult
 from textual.widgets import Header, Footer, DataTable
 from textual.screen import Screen
+from screens.variableDetail import VariableDetailScreen
+
 import os
 import shutil
 import subprocess
 
-from screens.variableDetail import VariableDetailScreen
+
+_kernelVersionCache: str | None = None
+_kernelBuildInfoCache: str | None = None
 
 
 # Functions -------------------------------------------
@@ -33,29 +37,65 @@ def getCompositor() -> str:
     return f"{compositor} ({displayServer})"
 
 
-def getKernelInfo() -> str:
+def getKernelVersion() -> str:
+    global _kernelVersionCache
+
+    if _kernelVersionCache is not None:
+        return _kernelVersionCache
+
     if not shutil.which("uname"):
-        return "—"
+        _kernelVersionCache = ""
+        return ""
     try:
-        kernelVersion = subprocess.run(
-            ["uname", "-r"], capture_output=True, text=True, timeout=3
-        ).stdout.strip()
+        _kernelVersionCache = subprocess.run(["uname", "-r"], capture_output=True, text=True, timeout=3).stdout.strip()
     except subprocess.TimeoutExpired:
+        _kernelVersionCache = ""
+    return _kernelVersionCache
+
+
+def getKernelBuildInfo() -> str:
+    global _kernelBuildInfoCache
+
+    if _kernelBuildInfoCache is not None:
+        return _kernelBuildInfoCache
+
+    if not shutil.which("uname"):
+        _kernelBuildInfoCache = ""
+        return ""
+    try:
+        _kernelBuildInfoCache = subprocess.run(["uname", "-v"], capture_output=True, text=True, timeout=3).stdout.strip()
+    except subprocess.TimeoutExpired:
+        _kernelBuildInfoCache = ""
+    return _kernelBuildInfoCache
+
+
+def isRtKernel() -> bool:
+    return "PREEMPT_RT" in getKernelBuildInfo()
+
+
+def getKernelInfo() -> str:
+    kernelVersion = getKernelVersion()
+    if not kernelVersion:
         return "—"
 
-    kernelType = "standard"
-    if "rt" in kernelVersion:
+    buildInfo = getKernelBuildInfo()
+    if "PREEMPT_RT" in buildInfo:
         kernelType = "realtime"
-    elif "cachyos" in kernelVersion:
+    elif "PREEMPT_DYNAMIC" in buildInfo:
+        kernelType = "dynamic"
+    elif "PREEMPT " in buildInfo:
+        kernelType = "low-latency"
+    elif "cachyos" in kernelVersion.lower():
         kernelType = "cachyos"
+    else:
+        kernelType = "standard"
     return f"{kernelType} ({kernelVersion})"
 
 
 def getKernelParams() -> dict[str, str]:
-    """Returns threadirqs, preempt, mitigations, maxCstate, clocksource."""
+    """Returns threadirqs, mitigations, maxCstate, clocksource."""
     result = {
         "threadirqs":   "—",
-        "preempt":      "—",
         "mitigations":  "—",
         "maxCstate":    "—",
         "clocksource":  "—",
@@ -74,10 +114,10 @@ def getKernelParams() -> dict[str, str]:
         else:
             params[item] = True
 
-    result["threadirqs"] = "enabled" if params.get("threadirqs") else "not set"
-
-    preempt = params.get("preempt")
-    result["preempt"] = preempt if preempt else "not set"
+    if isRtKernel():
+        result["threadirqs"] = "built-in (RT kernel)"
+    else:
+        result["threadirqs"] = "enabled" if params.get("threadirqs") else "not set"
 
     mitigations = params.get("mitigations")
     if mitigations == "off":
@@ -92,8 +132,7 @@ def getKernelParams() -> dict[str, str]:
 
     try:
         with open(
-            "/sys/devices/system/clocksource/clocksource0/current_clocksource", "r"
-        ) as f:
+            "/sys/devices/system/clocksource/clocksource0/current_clocksource", "r") as f:
             result["clocksource"] = f.read().strip()
     except FileNotFoundError:
         pass
@@ -105,10 +144,7 @@ def getRtkitStatus() -> str:
     if not shutil.which("systemctl"):
         return "systemctl not found"
     try:
-        active = subprocess.run(
-            ["systemctl", "is-active", "rtkit-daemon"],
-            capture_output=True, text=True, timeout=3,
-        ).stdout.strip()
+        active = subprocess.run(["systemctl", "is-active", "rtkit-daemon"], capture_output=True, text=True, timeout=3).stdout.strip()
     except subprocess.TimeoutExpired:
         return "—"
     if active != "active":
@@ -117,20 +153,14 @@ def getRtkitStatus() -> str:
     if not shutil.which("pgrep"):
         return "pgrep not found"
     try:
-        pid = subprocess.run(
-            ["pgrep", "-x", "pipewire"],
-            capture_output=True, text=True, timeout=3,
-        ).stdout.strip()
+        pid = subprocess.run(["pgrep", "-x", "pipewire"], capture_output=True, text=True, timeout=3).stdout.strip()
     except subprocess.TimeoutExpired:
         return "—"
     if not pid:
         return "PipeWire not running"
 
     try:
-        schedulingInfo = subprocess.run(
-            ["ps", "-T", "-p", pid, "-o", "cls,rtprio"],
-            capture_output=True, text=True, timeout=3,
-        ).stdout
+        schedulingInfo = subprocess.run(["ps", "-T", "-p", pid, "-o", "cls,rtprio"],capture_output=True, text=True, timeout=3).stdout
     except subprocess.TimeoutExpired:
         return "—"
 
@@ -154,15 +184,80 @@ def getUsbAutosuspend() -> str:
     return f"{timeout}s"
 
 
+def getSoundCardIrqPriority() -> str:
+    if not shutil.which("ps"):
+        return "—"
+    try:
+        psOutput = subprocess.run(["ps", "-eo", "comm,cls,rtprio"],capture_output=True, text=True, timeout=3).stdout
+    except subprocess.TimeoutExpired:
+        return "—"
+
+    # Look for a soundrelated IRQ thread
+    for line in psOutput.splitlines():
+        if "irq/" in line and "snd" in line.lower():
+            parts = line.split()
+            if len(parts) >= 3:
+                rtprio = parts[-1]
+                if rtprio in ("-", "0"):
+                    return "default (not prioritized)"
+                return f"{rtprio} (prioritized)"
+
+    # No sound IRQ thread found maybe that  means IRQs aren't threaded.
+    return "n/a (IRQ not threaded)"
+
+def getRtirqStatus() -> str:
+    rtirqInstalled = (
+        os.path.isfile("/etc/rtirq.conf")
+        or os.path.isfile("/etc/default/rtirq")
+    )
+    if not rtirqInstalled:
+        return "not installed"
+
+    if not shutil.which("systemctl"):
+        return "installed (can't check service)"
+    try:
+        active = subprocess.run(["systemctl", "is-active", "rtirq"],capture_output=True, text=True, timeout=3).stdout.strip()
+    except subprocess.TimeoutExpired:
+        return "—"
+
+    if active == "active":
+        return "active"
+    return "installed but inactive"
+
+
+def getUserLimits() -> dict[str, str]:
+    result = {"rtprio": "—", "memlock": "—"}
+    try:
+        with open("/proc/self/limits", "r") as f:
+            limitsText = f.read()
+    except FileNotFoundError:
+        return result
+
+    for line in limitsText.splitlines():
+        if line.startswith("Max realtime priority"):
+            softLimit = line[26:47].strip()
+            result["rtprio"] = softLimit if softLimit else "—"
+        elif line.startswith("Max locked memory"):
+            softLimit = line[26:47].strip()
+            if softLimit == "unlimited":
+                result["memlock"] = "unlimited"
+            else:
+                try:
+                    mb = int(softLimit) // (1024 * 1024)
+                    result["memlock"] = f"{mb} MB"
+                except ValueError:
+                    result["memlock"] = softLimit if softLimit else "—"
+    return result
+
+
+# ---------------------------------------------------------------------------------------------------
 def getSystemInfoStatic() -> dict[str, str]:
-    """Info that doesn't change at runtime — fetched once."""
     kernelParams = getKernelParams()
     return {
         "cpuGovernor":  getCpuGovernor(),
         "compositor":   getCompositor(),
         "kernel":       getKernelInfo(),
         "threadirqs":   kernelParams["threadirqs"],
-        "preempt":      kernelParams["preempt"],
         "mitigations":  kernelParams["mitigations"],
         "maxCstate":    kernelParams["maxCstate"],
         "clocksource":  kernelParams["clocksource"],
@@ -170,10 +265,14 @@ def getSystemInfoStatic() -> dict[str, str]:
 
 
 def getSystemInfoActive() -> dict[str, str]:
-    """Info that can change at runtime — refreshed periodically."""
+    limits = getUserLimits()
     return {
         "rtkit":          getRtkitStatus(),
         "usbAutosuspend": getUsbAutosuspend(),
+        "soundIrqPrio":   getSoundCardIrqPriority(),
+        "rtirq":          getRtirqStatus(),
+        "rtprio":         limits["rtprio"],
+        "memlock":        limits["memlock"],
     }
 
 
@@ -183,7 +282,6 @@ STATIC_ROWS = [
     ("compositor",   "Compositor"),
     ("kernel",       "Kernel"),
     ("threadirqs",   "threadirqs"),
-    ("preempt",      "preempt"),
     ("mitigations",  "mitigations"),
     ("maxCstate",    "processor.max_cstate"),
     ("clocksource",  "active clocksource"),
@@ -192,6 +290,10 @@ STATIC_ROWS = [
 ACTIVE_ROWS = [
     ("rtkit",          "rtkit"),
     ("usbAutosuspend", "USB autosuspend"),
+    ("soundIrqPrio",   "sound card IRQ priority"),
+    ("rtirq",          "rtirq"),
+    ("rtprio",         "rtprio limit"),
+    ("memlock",        "memlock limit"),
 ]
 
 ALL_ROWS = STATIC_ROWS + ACTIVE_ROWS
@@ -228,17 +330,14 @@ class SystemLatencyScreen(Screen):
         data = getSystemInfoActive()
         table = self.query_one(DataTable)
         for key, _ in ACTIVE_ROWS:
-            self.app.call_from_thread(
-                table.update_cell, key, "value", data[key]
-            )
+            self.app.call_from_thread(table.update_cell, key, "value", data[key])
 
     def on_data_table_row_selected(
-        self, event: DataTable.RowSelected
-    ) -> None:
+        self, event: DataTable.RowSelected) -> None:
         key = event.row_key.value
         table = self.query_one(DataTable)
         currentValue = table.get_cell(event.row_key, "value")
         displayLabel = dict(ALL_ROWS)[key]
-        self.app.push_screen(
-            VariableDetailScreen(key, displayLabel, currentValue)
-        )
+        # for updates need to pass in sep source dep on active or static when pushing info screen
+        source = "system_static" if key in dict(STATIC_ROWS) else "system_active"
+        self.app.push_screen(VariableDetailScreen(key, displayLabel, currentValue, source=source))

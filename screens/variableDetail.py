@@ -10,11 +10,18 @@ class VariableDetailScreen(Screen):
     BINDINGS = [("escape", "app.pop_screen", "Back")]
     CSS_PATH = "variableDetail.tcss"
 
-    def __init__(self, variableKey: str, displayLabel: str, currentValue: str) -> None:
+    def __init__(
+        self,
+        variableKey: str,
+        displayLabel: str,
+        currentValue: str,
+        source: str,
+    ) -> None:
         super().__init__()
         self.variableKey = variableKey
         self.displayLabel = displayLabel
         self.currentValue = currentValue
+        self.source = source
 
     def compose(self) -> ComposeResult:
         text, urls = EXPLANATIONS.get(
@@ -31,13 +38,23 @@ class VariableDetailScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
+        if self.source == "system_static":
+            return
         self.set_interval(3.5, self.refreshValue)
 
     @work(exclusive=True, thread=True)
     def refreshValue(self) -> None:
-        from screens.audio import getAudioInfo
+        if self.source == "audio":
+            from screens.audio import getAudioInfo
+            data = getAudioInfo()
+        elif self.source == "system_active":
+            from screens.system import getSystemInfoActive
+            data = getSystemInfoActive()
+        else:
+            return
 
-        data = getAudioInfo()
-        newValue = data.get(self.variableKey, "—")
+        if self.variableKey not in data:
+            return
+
         valueLabel = self.query_one("#detail-value", Label)
-        self.app.call_from_thread(valueLabel.update, newValue)
+        self.app.call_from_thread(valueLabel.update, data[self.variableKey])

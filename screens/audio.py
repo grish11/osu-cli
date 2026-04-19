@@ -21,12 +21,7 @@ def getAudioInfo() -> dict[str, str]:
     if not shutil.which("pw-top"):
         return empty
     try:
-        result = subprocess.run(
-            ["pw-top", "-b", "--iterations=3"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
+        result = subprocess.run(["pw-top", "-b", "--iterations=3"],capture_output=True,text=True,timeout=5)
     except subprocess.TimeoutExpired:
         return empty
 
@@ -123,4 +118,4 @@ class AudioLatencyScreen(Screen):
             table = self.query_one(DataTable)
             currentValue = table.get_cell(event.row_key, "value")
             displayLabel = dict(ROW_LABELS)[key]
-            self.app.push_screen(VariableDetailScreen(key, displayLabel, currentValue))
+            self.app.push_screen(VariableDetailScreen(key, displayLabel, currentValue, source="audio"))

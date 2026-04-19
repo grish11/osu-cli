@@ -9,7 +9,6 @@ from screens.variableDetail import VariableDetailScreen
 
 # Functions -------------------------------------------
 def _parseIniFile(path: str) -> dict[str, str]:
-    """Read a simple ini file (key = value per line) and return a dict."""
     try:
         with open(os.path.expanduser(path), "r") as f:
             lines = f.read().splitlines()
@@ -91,12 +90,9 @@ class OsuLatencyScreen(Screen):
             )
 
     def on_data_table_row_selected(
-        self, event: DataTable.RowSelected
-    ) -> None:
+        self, event: DataTable.RowSelected) -> None:
         key = event.row_key.value
         table = self.query_one(DataTable)
         currentValue = table.get_cell(event.row_key, "value")
         displayLabel = dict(ROW_LABELS)[key]
-        self.app.push_screen(
-            VariableDetailScreen(key, displayLabel, currentValue)
-        )
+        self.app.push_screen(VariableDetailScreen(key, displayLabel, currentValue))
