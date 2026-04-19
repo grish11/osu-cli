@@ -7,9 +7,12 @@ A Textual-based TUI for inspecting audio, system, and osu!lazer latency settings
 - osu!lazer (optional — osu! screen reads its config files)
 
 ## Install
-```python -m venv .venv
+```
+python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt```
+pip install -r requirements.txt
+```
 
 ## Run
-```python main.py```
+```python main.py
+```
