@@ -1,0 +1,39 @@
+$accent: #d8bfd8;
+/* fffaf0 */
+
+Screen {
+    align: center top;
+}
+
+#logo {
+    width: auto;
+    height: auto;
+    margin-top: 1;
+}
+
+#box {
+    border: ascii $accent #fffaf0;
+    height: 10;
+    width: 75;
+    margin-top: 2;
+}
+
+#box Label {
+    width: 100%;
+    text-align: center;
+}
+
+#box Horizontal {
+    height: auto;
+    align: center middle;
+    margin-top: 1;
+}
+
+Button:focus {
+    text-style: none;
+    background-tint: $background 0%;
+}
+
+#box Button {
+    margin: 0 1;
+}

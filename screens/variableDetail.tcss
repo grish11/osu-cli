@@ -1,0 +1,52 @@
+Screen {
+    align: center top;
+}
+
+#detail-box {
+    border: ascii #d8bfd8;
+    padding: 1 2;
+    margin: 2 4;
+    width: 80;
+    height: auto;
+}
+
+#detail-header {
+    height: auto;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#detail-title {
+    width: auto;
+    text-style: bold;
+}
+
+#detail-value {
+    width: auto;
+    color: #d8bfd8;
+    margin-left: 1;
+}
+
+#detail-text {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+.detail-link {
+    width: auto;
+    color: #378ADD;
+    background: transparent;
+    text-style: none;
+}
+
+.detail-link:hover {
+    color: #378ADD;
+    background: transparent;
+    text-style: underline;
+}
+
+.detail-link:focus {
+    color: #378ADD;
+    background: transparent;
+    text-style: underline;
+}
