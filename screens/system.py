@@ -93,12 +93,12 @@ def getKernelInfo() -> str:
 
 
 def getKernelParams() -> dict[str, str]:
-    """Returns threadirqs, mitigations, maxCstate, clocksource."""
+    """Returns threadirqs, mitigations, maxCstate, clockSource."""
     result = {
         "threadirqs":   "—",
         "mitigations":  "—",
         "maxCstate":    "—",
-        "clocksource":  "—",
+        "clockSource":  "—",
     }
     try:
         with open("/proc/cmdline", "r") as f:
@@ -133,7 +133,7 @@ def getKernelParams() -> dict[str, str]:
     try:
         with open(
             "/sys/devices/system/clocksource/clocksource0/current_clocksource", "r") as f:
-            result["clocksource"] = f.read().strip()
+            result["clockSource"] = f.read().strip()
     except FileNotFoundError:
         pass
 
@@ -260,7 +260,7 @@ def getSystemInfoStatic() -> dict[str, str]:
         "threadirqs":   kernelParams["threadirqs"],
         "mitigations":  kernelParams["mitigations"],
         "maxCstate":    kernelParams["maxCstate"],
-        "clocksource":  kernelParams["clocksource"],
+        "clockSource":  kernelParams["clockSource"],
     }
 
 
@@ -281,19 +281,19 @@ STATIC_ROWS = [
     ("cpuGovernor",  "CPU governor"),
     ("compositor",   "Compositor"),
     ("kernel",       "Kernel"),
-    ("threadirqs",   "threadirqs"),
-    ("mitigations",  "mitigations"),
+    ("threadirqs",   "Threadirqs"),
+    ("mitigations",  "Mitigations"),
     ("maxCstate",    "processor.max_cstate"),
-    ("clocksource",  "active clocksource"),
+    ("clockSource",  "Active Clocksource"),
 ]
 
 ACTIVE_ROWS = [
-    ("rtkit",          "rtkit"),
+    ("rtkit",          "Rtkit"),
     ("usbAutosuspend", "USB autosuspend"),
-    ("soundIrqPrio",   "sound card IRQ priority"),
-    ("rtirq",          "rtirq"),
-    ("rtprio",         "rtprio limit"),
-    ("memlock",        "memlock limit"),
+    ("soundIrqPrio",   "Sound Card IRQ priority"),
+    ("rtirq",          "Rtirq"),
+    ("rtprio",         "Rtprio Limit"),
+    ("memlock",        "Memlock Limit"),
 ]
 
 ALL_ROWS = STATIC_ROWS + ACTIVE_ROWS

@@ -37,10 +37,6 @@ In addition, the CPU Headroom is represented as: (1.0 - busyRatio) * 100 = space
         """(bufferSize / sampleRate) * 1000 = audio latency in ms""",
         [],
     ),
-    "cpuHeadroomPercent": (
-        """(1.0 - busyRatio) * 100 = space for cpu to do work, which is the opposite of busyRatio. For example if busyRatio was 0.3=30%, there is 70% headroom which indicates comfort and less of a chance for xruns to occur.""",
-        [],
-    ),
     "cpuGovernor": (
         """outputs the type of scaling cpu governor. Scaling governors are power schemes determined by the desired frequency of the CPU. The reason this is implemented is to let the operating system scale CPU frequency up or down in order to save power or improve performance, or do something different. Here are two examples of scaling governors, but there are more (to see, click the link below for documentation and more examples):
 → performance: runs the cpu at the maximum frequency
@@ -93,5 +89,12 @@ An example of implementation would be, processor.max_cstate=N, where N specifies
             "https://wiki.linuxaudio.org/wiki/system_configuration#quality_of_service_interface",
             "https://docs.kernel.org/admin-guide/pm/cpuidle.html",
         ],
+    ),
+"bufferSize": (
+        """represents the active quantum size (not min or max from config) – the number of audio samples processed per processing cycle of the PipeWire graph. Decreasing this to a smaller number causes the driver to process audio more frequently, reducing the latency, with a tradeoff of higher CPU overhead. The driver quantum adopts the lowest quantum requested by any connected follower node (apps/devices such but not limited by, Spotify, microphone, etc.) or falls back to PipeWire default.""",
+        [
+            "https://docs.pipewire.org/page_man_pipewire_conf_5.html",
+            "https://docs.pipewire.org/page_man_pw-top_1.html",
+            ],
     ),
 }

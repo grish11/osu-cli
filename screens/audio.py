@@ -68,7 +68,7 @@ def getAudioInfo() -> dict[str, str]:
             "audioLatency": f"{audioLatency:.2f} ms",
             "busyRatio":    f"{busyRatio:.2f} ({cpuHeadroom:.0f}% headroom)",
             "waitRatio":    f"{waitRatio:.2f}",
-            "xrunCount":    f"{xrunCount} (since start)",
+            "xrunCount":    f"{xrunCount}",
         }
 
     return empty
