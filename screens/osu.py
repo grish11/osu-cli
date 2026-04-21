@@ -95,4 +95,4 @@ class OsuLatencyScreen(Screen):
         table = self.query_one(DataTable)
         currentValue = table.get_cell(event.row_key, "value")
         displayLabel = dict(ROW_LABELS)[key]
-        self.app.push_screen(VariableDetailScreen(key, displayLabel, currentValue))
+        self.app.push_screen(VariableDetailScreen(key, displayLabel, currentValue, source="osu"))
