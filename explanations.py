@@ -97,4 +97,44 @@ An example of implementation would be, processor.max_cstate=N, where N specifies
             "https://news.lavx.hu/article/hpet-vs-tsc-how-linux-s-clock-source-choice-can-slash-redis-performance",
         ],
     ),
+    "rtkit": (
+        """A D-Bus system service (an inter-process communication (IPC) mechanism on Linux that lets processes talk to each other over a shared message bus) that grants realtime scheduling policy (SCHED_RR) to unprivileged user threads on request, authorized via PolicyKit. Instead of each app needing elevated privileges to call sched_setscheduler(), clients ask rtkit over D-Bus and the daemon promotes the specific thread. It only grants RT to threads with SCHED_RESET_ON_FORK set, which prevents the realtime policy from being inherited by child processes (blocking "RT fork bombs").""",
+        [
+            "https://github.com/heftig/rtkit",
+            "https://linuxvox.com/blog/linux-what-is-dbus/",
+        ],
+    ),
+    "usbAutosuspend": (
+        """A Linux power management feature that suspends idle USB devices to save power. The autosuspend_delay_ms value sets how long a device must remain idle before the kernel suspends it (default: 2000 ms). The device is auto resumed when a program tries to use it.
+Many USB drivers don't support autosuspend, and if a non supporting driver is bound to a device, the kernel treats the device as never idle and wont suspend it.""",
+        [
+            "https://docs.kernel.org/driver-api/usb/power-management.html",
+        ],
+    ),
+    "soundIrqPrio": (
+        """Realtime priority of your soundcard's kernel IRQ handler thread. Only applies when threadirqs is enabled. On modern systems where your soundcard has a dedicated MSI-X interrupt (check your rtcqs output, if it says "does not share its IRQ" ur fine), prioritizing this gives little benefit. It matters most on older hardware with shared IRQs. Not what prioritizes osu!lazer or PipeWire themselves.  those use rtkit and user rtprio limits.""",
+        [
+            "https://autostatic.com/2025/12/30/linux-audio-performance-improvements/",
+        ],
+    ),
+    "rtirq": (
+        """Shell script and systemd service that assigns realtime priorities to kernel IRQ threads created by threadirqs (or a PREEMPT_RT kernel). Prioritizes hardware interrupt handlers by kernel module name (snd, usb, etc.) it does NOT prioritize userspace applications like PipeWire or osu!lazer. Useful on older systems with shared IRQs; on modern PCIe hardware with MSI-X, benefit is minimal. The linuxaudio wiki maintainer acknowledged in Dec 2025 that "there's very little gain in prioritising threaded IRQs" on modern systems and recommends rtcirqus as a more targeted alternative.""",
+        [
+            "https://autostatic.com/2025/12/30/linux-audio-performance-improvements/",
+            "https://wiki.linuxaudio.org/wiki/system_configuration#do_i_really_need_a_real-time_kernel",
+        ],
+    ),
+    "rtprio": (
+        """Maximum realtime scheduling priority your user can request. Range 0–99, higher = more urgent. Audio software like PipeWire needs this to be high (some distros have defaults already preset) to elevate its audio threads above normal processes. At 0, realtime scheduling is effectively disabled for your user, your audio app cannot claim priority over, say, a browser tab :(. Configured via /etc/security/limits.conf or limits.d/; applied at login by PAM. Requires logout/login to take effect.""",
+        [
+            "https://wiki.linuxaudio.org/wiki/system_configuration#limits.confaudio.conf",
+        ],
+    ),
+    "memlock": (
+        """Maximum memory (KB) your user can lock in RAM with mlock()/mlockall(). Audio software pins its working memory so it can't be swapped to disk mid-callback (which would cause xruns). Common recommended value: unlimited or 4 GB (4194304). Distros again have common recommended values. A 2009 LinuxMusicians thread notes that unlimited allows buggy apps to eat all RAM and hang the system, so most distros use a large but finite value instead. Low values like 8 MB mean PipeWire can't properly lock its buffers. Configured in /etc/security/limits.conf; applied at login.""",
+        [
+            "https://wiki.linuxaudio.org/wiki/system_configuration#limits.confaudio.conf",
+            "https://linuxmusicians.com/viewtopic.php?f=10&t=2193",
+        ],
+    ),
 }

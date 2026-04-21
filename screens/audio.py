@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.widgets import Header, Footer, DataTable
+from textual.widgets import Header, Footer, DataTable, Static
 from textual.screen import Screen
 from textual import work
 from screens.variableDetail import VariableDetailScreen
@@ -97,7 +97,7 @@ class AudioLatencyScreen(Screen):
         table = self.query_one(DataTable)
         table.cursor_type = "row"
         table.add_column("variable", key="variable")
-        table.add_column("value", key="value")
+        table.add_column("value **Order is not significant**", key="value")
 
         # seed the table with labels and initial values
         data = getAudioInfo()

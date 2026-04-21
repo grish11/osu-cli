@@ -71,7 +71,7 @@ class OsuLatencyScreen(Screen):
         table = self.query_one(DataTable)
         table.cursor_type = "row"
         table.add_column("variable", key="variable")
-        table.add_column("value", key="value")
+        table.add_column("value **Order is not significant**", key="value")
 
         data = getOsuSettings()
         for key, label in ROW_LABELS:

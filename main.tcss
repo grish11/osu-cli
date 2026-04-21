@@ -21,6 +21,9 @@ Screen {
 #box Label {
     width: 100%;
     text-align: center;
+    text-style: italic;
+    color: $accent 70%;
+    padding: 0 2;
 }
 
 #box Horizontal {
@@ -37,3 +40,4 @@ Button:focus {
 #box Button {
     margin: 0 1;
 }
+

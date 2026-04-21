@@ -38,23 +38,18 @@ class VariableDetailScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        if self.source == "system_static":
-            return
-        self.set_interval(3.5, self.refreshValue)
+        if self.source == "audio":
+            self.set_interval(3.5, self.refreshValue)
 
     @work(exclusive=True, thread=True)
     def refreshValue(self) -> None:
         if self.source == "audio":
             from screens.audio import getAudioInfo
             data = getAudioInfo()
-        elif self.source == "system_active":
-            from screens.system import getSystemInfoActive
-            data = getSystemInfoActive()
         else:
             return
 
         if self.variableKey not in data:
             return
-
         valueLabel = self.query_one("#detail-value", Label)
         self.app.call_from_thread(valueLabel.update, data[self.variableKey])

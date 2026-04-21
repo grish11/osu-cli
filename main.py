@@ -39,11 +39,7 @@ class osuLatencyApp(App):
         yield Static(LOGO, id="logo", markup=False)
         with Vertical(id="box"):
             yield Label(
-                "please click the following buttons"
-                " to explore the latency of your system,\n"
-                "in correspondence to osu!lazer :)\n"
-                " ** make sure your osu!lazer is running"
-                " in the background! **"
+                "Click the buttons below to test your system's latency against osu!lazer. Make sure osu!lazer is running in the background! To understand the variable try clicking on its row for MY definition with sources, I can make mistakes!"
             )
             with Horizontal():
                 yield Button("Audio", id="audio", flat=True)

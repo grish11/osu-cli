@@ -160,13 +160,13 @@ def getRtkitStatus() -> str:
         return "PipeWire not running"
 
     try:
-        schedulingInfo = subprocess.run(["ps", "-T", "-p", pid, "-o", "cls,rtprio"],capture_output=True, text=True, timeout=3).stdout
+        schedulingInfo = subprocess.run(["ps", "-T", "-p", pid, "-o", "cls,rtprio"], capture_output=True, text=True, timeout=3).stdout
     except subprocess.TimeoutExpired:
         return "—"
 
     for line in schedulingInfo.splitlines():
         if "FF" in line or "RR" in line:
-            return "active — PipeWire has realtime priority"
+            return "active, PipeWire has realtime priority"
 
     return "running but PipeWire not realtime"
 
@@ -188,11 +188,11 @@ def getSoundCardIrqPriority() -> str:
     if not shutil.which("ps"):
         return "—"
     try:
-        psOutput = subprocess.run(["ps", "-eo", "comm,cls,rtprio"],capture_output=True, text=True, timeout=3).stdout
+        psOutput = subprocess.run(["ps", "-eo", "comm,cls,rtprio"], capture_output=True, text=True, timeout=3).stdout
     except subprocess.TimeoutExpired:
         return "—"
 
-    # Look for a soundrelated IRQ thread
+    # Look for a sound-related IRQ thread
     for line in psOutput.splitlines():
         if "irq/" in line and "snd" in line.lower():
             parts = line.split()
@@ -202,8 +202,9 @@ def getSoundCardIrqPriority() -> str:
                     return "default (not prioritized)"
                 return f"{rtprio} (prioritized)"
 
-    # No sound IRQ thread found maybe that  means IRQs aren't threaded.
+    # No sound IRQ thread found — likely means IRQs aren't threaded.
     return "n/a (IRQ not threaded)"
+
 
 def getRtirqStatus() -> str:
     rtirqInstalled = (
@@ -216,7 +217,7 @@ def getRtirqStatus() -> str:
     if not shutil.which("systemctl"):
         return "installed (can't check service)"
     try:
-        active = subprocess.run(["systemctl", "is-active", "rtirq"],capture_output=True, text=True, timeout=3).stdout.strip()
+        active = subprocess.run(["systemctl", "is-active", "rtirq"], capture_output=True, text=True, timeout=3).stdout.strip()
     except subprocess.TimeoutExpired:
         return "—"
 
@@ -251,55 +252,50 @@ def getUserLimits() -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------------------------------
-def getSystemInfoStatic() -> dict[str, str]:
+def getSystemInfo() -> dict[str, str]:
+    """Reads every system-latency-relevant variable in one shot."""
     kernelParams = getKernelParams()
-    return {
-        "cpuGovernor":  getCpuGovernor(),
-        "compositor":   getCompositor(),
-        "kernel":       getKernelInfo(),
-        "threadirqs":   kernelParams["threadirqs"],
-        "mitigations":  kernelParams["mitigations"],
-        "maxCstate":    kernelParams["maxCstate"],
-        "clockSource":  kernelParams["clockSource"],
-    }
-
-
-def getSystemInfoActive() -> dict[str, str]:
     limits = getUserLimits()
     return {
+        "kernel":         getKernelInfo(),
+        "cpuGovernor":    getCpuGovernor(),
         "rtkit":          getRtkitStatus(),
+        "rtprio":         limits["rtprio"],
+        "memlock":        limits["memlock"],
+        "maxCstate":      kernelParams["maxCstate"],
+        "threadirqs":     kernelParams["threadirqs"],
+        "mitigations":    kernelParams["mitigations"],
+        "clockSource":    kernelParams["clockSource"],
         "usbAutosuspend": getUsbAutosuspend(),
         "soundIrqPrio":   getSoundCardIrqPriority(),
         "rtirq":          getRtirqStatus(),
-        "rtprio":         limits["rtprio"],
-        "memlock":        limits["memlock"],
+        "compositor":     getCompositor(),
     }
 
 
 # Screens ---------------------------------------------
-STATIC_ROWS = [
-    ("cpuGovernor",  "CPU governor"),
-    ("compositor",   "Compositor"),
-    ("kernel",       "Kernel"),
-    ("threadirqs",   "Threadirqs"),
-    ("mitigations",  "Mitigations"),
-    ("maxCstate",    "processor.max_cstate"),
-    ("clockSource",  "Active Clocksource"),
-]
-
-ACTIVE_ROWS = [
+ROWS = [
+    ("kernel",         "Kernel"),
+    ("cpuGovernor",    "CPU governor"),
     ("rtkit",          "Rtkit"),
+    ("rtprio",         "Rtprio Limit"),
+    ("maxCstate",      "processor.max_cstate"),
+    ("memlock",        "Memlock Limit"),
+    ("threadirqs",     "Threadirqs"),
+    ("mitigations",    "Mitigations"),
+    ("clockSource",    "Active Clocksource"),
     ("usbAutosuspend", "USB autosuspend"),
     ("soundIrqPrio",   "Sound Card IRQ priority"),
     ("rtirq",          "Rtirq"),
-    ("rtprio",         "Rtprio Limit"),
-    ("memlock",        "Memlock Limit"),
+    ("compositor",     "Compositor"),
 ]
 
-ALL_ROWS = STATIC_ROWS + ACTIVE_ROWS
 
 class SystemLatencyScreen(Screen):
-    BINDINGS = [("escape", "app.pop_screen", "Back")]
+    BINDINGS = [
+        ("escape", "app.pop_screen", "Back"),
+        ("r", "refresh", "Refresh"),
+    ]
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -310,34 +306,22 @@ class SystemLatencyScreen(Screen):
         table = self.query_one(DataTable)
         table.cursor_type = "row"
         table.add_column("variable", key="variable")
-        table.add_column("value", key="value")
+        table.add_column("value  ** Ordered by impact on osu!lazer latency (high to low). Press 'r' to refresh.", key="value")
 
-        # seed static rows once
-        staticData = getSystemInfoStatic()
-        for key, label in STATIC_ROWS:
-            table.add_row(label, staticData[key], key=key)
-
-        # seed active rows with initial values
-        activeData = getSystemInfoActive()
-        for key, label in ACTIVE_ROWS:
-            table.add_row(label, activeData[key], key=key)
-
-        # refresh only the active rows
-        self.set_interval(5.0, self.refreshActiveValues)
+        data = getSystemInfo()
+        for key, label in ROWS:
+            table.add_row(label, data[key], key=key)
 
     @work(exclusive=True, thread=True)
-    def refreshActiveValues(self) -> None:
-        data = getSystemInfoActive()
+    def action_refresh(self) -> None:
+        data = getSystemInfo()
         table = self.query_one(DataTable)
-        for key, _ in ACTIVE_ROWS:
+        for key, _ in ROWS:
             self.app.call_from_thread(table.update_cell, key, "value", data[key])
 
-    def on_data_table_row_selected(
-        self, event: DataTable.RowSelected) -> None:
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         key = event.row_key.value
         table = self.query_one(DataTable)
         currentValue = table.get_cell(event.row_key, "value")
-        displayLabel = dict(ALL_ROWS)[key]
-        # for updates need to pass in sep source dep on active or static when pushing info screen
-        source = "system_static" if key in dict(STATIC_ROWS) else "system_active"
-        self.app.push_screen(VariableDetailScreen(key, displayLabel, currentValue, source=source))
+        displayLabel = dict(ROWS)[key]
+        self.app.push_screen(VariableDetailScreen(key, displayLabel, currentValue, source="system"))
