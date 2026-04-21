@@ -13,13 +13,10 @@
   </p>
 </div>
 
-<details open>
-<summary><b>Preview</b></summary>
 <br />
 <div align="center">
   <img src="https://github.com/grish11/osutop/blob/main/assets/osuTop.png" alt="osutop preview" width="800">
 </div>
-</details>
 
 ## Requirements
 
