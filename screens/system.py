@@ -16,9 +16,16 @@ _kernelBuildInfoCache: str | None = None
 # Functions -------------------------------------------
 def getCpuGovernor() -> str:
     try:
-        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r") as f:
-            return f.read().strip()
-    except FileNotFoundError:
+        scalingGovernors = subprocess.run("cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor", shell=True,capture_output=True, text=True).stdout.splitlines()
+        count = 0
+        totalGovernors = len(scalingGovernors)
+        for val in scalingGovernors:
+            if val == "performance":
+                count += 1
+        state = f"performance ({count}/{totalGovernors}), powersave ({totalGovernors-count}/{totalGovernors})"
+        return state
+
+    except Exception:
         return "—"
 
 
