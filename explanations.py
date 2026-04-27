@@ -137,4 +137,18 @@ Many USB drivers don't support autosuspend, and if a non supporting driver is bo
             "https://linuxmusicians.com/viewtopic.php?f=10&t=2193",
         ],
     ),
+    "smt": (
+        """Allows multiple execution threads to be executed on a single physical CPU core. Basically, 2 virtual cores per core as opposed to one, allowing for double the processes per core. You might have heard of Hyper-Threading, which is an implementation of SMT. Both increase contention on processor resources, and it's recommended to turn them off if you want to reduce jitter caused by resource contention. NixOS docs note that disabling SMT supplements the L1 data cache flushing mitigation against malicious VM guests, since SMT can expose data flushed from one thread's cache to a sibling thread running on the same physical core.
+
+The control state reflects how SMT is being managed: on means SMT is supported and fully enabled, off means it's supported but disabled (only primary threads can be brought online), forceoff is the same as off but cannot be changed at runtime, and notsupported means the CPU has no SMT capability. The active status reports whether SMT is actually running, like whether any physical core currently has two or more sibling threads online. For more info on SMT control states see the first link in the sources. """,
+        [
+            "https://access.redhat.com/solutions/rhel-smt",
+            "https://rigtorp.se/low-latency-guide/",
+            "https://access.redhat.com/solutions/rhel-smt",
+            "https://mynixos.com/nixpkgs/option/security.allowSimultaneousMultithreading",
+            "https://en.wikipedia.org/wiki/Hyper-threading",
+        ],
+
+    ),
+
 }

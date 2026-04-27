@@ -147,6 +147,27 @@ def getKernelParams() -> dict[str, str]:
     return result
 
 
+def getSMTInfo() -> str:
+    try:
+        with open("/sys/devices/system/cpu/smt/control", "r") as f:
+            smtState = f.read()
+    except FileNotFoundError:
+        pass
+
+    try:
+        with open("/sys/devices/system/cpu/smt/active", "r") as f:
+            smtStatus = f.read()
+            if int(smtStatus): 
+                smtStatus = "Active"
+            smtStatus = "Inactive"
+
+    except FileNotFoundError:
+        pass
+
+    result = f"Status: {smtStatus}, State: {smtState}"
+    return result
+        
+
 def getRtkitStatus() -> str:
     if not shutil.which("systemctl"):
         return "systemctl not found"
@@ -273,6 +294,7 @@ def getSystemInfo() -> dict[str, str]:
         "threadirqs":     kernelParams["threadirqs"],
         "mitigations":    kernelParams["mitigations"],
         "clockSource":    kernelParams["clockSource"],
+        "smt":            getSMTInfo(),
         "usbAutosuspend": getUsbAutosuspend(),
         "soundIrqPrio":   getSoundCardIrqPriority(),
         "rtirq":          getRtirqStatus(),
@@ -291,6 +313,7 @@ ROWS = [
     ("threadirqs",     "Threadirqs"),
     ("mitigations",    "Mitigations"),
     ("clockSource",    "Active Clocksource"),
+    ("smt",            "Simultaneous Multithreading"),
     ("usbAutosuspend", "USB autosuspend"),
     ("soundIrqPrio",   "Sound Card IRQ priority"),
     ("rtirq",          "Rtirq"),
