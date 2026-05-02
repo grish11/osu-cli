@@ -11,6 +11,9 @@
     ·
     <a href="https://github.com/grish11/osutop/issues">Request Feature</a>
   </p>
+  <p align="center">
+    <b> <i> Rankings, definitions, and recommendations based on osu!lazer optimization experience and community input. Results may vary by system configuration. </i> </b>
+  </p>
 </div>
 
 <br />
