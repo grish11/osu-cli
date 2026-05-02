@@ -7,6 +7,7 @@ from screens.variableDetail import VariableDetailScreen
 import os
 import shutil
 import subprocess
+import re
 
 
 _kernelVersionCache: str | None = None
@@ -234,6 +235,48 @@ def getSoundCardIrqPriority() -> str:
     return "n/a (IRQ not threaded)"
 
 
+def getSoundCardIrqSharing() -> str:
+    irqPath = "/sys/kernel/irq"
+    
+    try:
+        irqList = os.listdir(irqPath)
+    except FileNotFoundError:
+        return "—"
+
+    sndRe = re.compile(r"audiodsp|snd_.*")
+    shared = []
+    exclusive = []
+
+    for irq in irqList:
+        try:
+            with open(f"{irqPath}/{irq}/actions", "r") as f:
+                devices = f.readline().strip()
+        except OSError:
+            continue
+
+        if not sndRe.search(devices):
+            continue
+
+        deviceList = [d for d in devices.split(",") if d]
+        sndDevice = deviceList[0]
+
+        if len(deviceList) > 1:
+            shared.append(f"IRQ {irq} ({sndDevice}) shared with: {', '.join(deviceList[1:])}")
+        else:
+            exclusive.append(f"IRQ {irq} ({sndDevice})")
+
+    if not shared and not exclusive:
+        return "no sound card IRQs found"
+    if not shared:
+        return "exclusive — " + "; ".join(exclusive)
+    
+    parts = []
+    if exclusive:
+        parts.append("exclusive: " + "; ".join(exclusive))
+    parts.append("shared: " + "; ".join(shared))
+    return " | ".join(parts)
+
+
 def getRtirqStatus() -> str:
     rtirqInstalled = (
         os.path.isfile("/etc/rtirq.conf")
@@ -297,6 +340,7 @@ def getSystemInfo() -> dict[str, str]:
         "smt":            getSMTInfo(),
         "usbAutosuspend": getUsbAutosuspend(),
         "soundIrqPrio":   getSoundCardIrqPriority(),
+        "soundIrqSharing":getSoundCardIrqSharing(),
         "rtirq":          getRtirqStatus(),
         "compositor":     getCompositor(),
     }
@@ -316,6 +360,7 @@ ROWS = [
     ("smt",            "Simultaneous Multithreading"),
     ("usbAutosuspend", "USB autosuspend"),
     ("soundIrqPrio",   "Sound Card IRQ priority"),
+    ("soundIrqSharing","Sound Card IRQ Sharing"),
     ("rtirq",          "Rtirq"),
     ("compositor",     "Compositor"),
 ]
@@ -325,6 +370,8 @@ class SystemLatencyScreen(Screen):
     BINDINGS = [
         ("escape", "app.pop_screen", "Back"),
         ("r", "refresh", "Refresh"),
+        ("k", "cursor_up", "Up"),
+        ("j", "cursor_down", "Down"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -341,6 +388,13 @@ class SystemLatencyScreen(Screen):
         data = getSystemInfo()
         for key, label in ROWS:
             table.add_row(label, data[key], key=key)
+
+    def on_key(self, event) -> None:
+        table = self.query_one(DataTable)
+        if event.key == "j":
+            table.move_cursor(row=table.cursor_row + 1)
+        elif event.key == "k":
+            table.move_cursor(row=table.cursor_row - 1)
 
     @work(exclusive=True, thread=True)
     def action_refresh(self) -> None:

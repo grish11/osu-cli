@@ -2,6 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Static, Label, Button
 from textual.containers import Center, Vertical, Horizontal
 from textual.screen import Screen
+from textual.reactive import reactive
 
 from screens.audio import AudioLatencyScreen
 from screens.system import SystemLatencyScreen
@@ -27,7 +28,10 @@ u8888cJ888    @8Wou 9%    8888 ,888B .  .8888Lu= u8888cJ888   uW888L  888'
 
 class osuLatencyApp(App):
     CSS_PATH = "main.tcss"
-    BINDINGS = [("q", "quit", "Quit")]
+
+    BINDINGS = [
+        ("q", "quit", "Quit")]
+
     SCREENS = {
         "audio": AudioLatencyScreen,
         "system": SystemLatencyScreen,

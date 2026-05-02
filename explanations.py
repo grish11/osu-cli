@@ -138,15 +138,27 @@ Many USB drivers don't support autosuspend, and if a non supporting driver is bo
         ],
     ),
     "smt": (
-        """Allows multiple execution threads to be executed on a single physical CPU core. Basically, 2 virtual cores per core as opposed to one, allowing for double the processes per core. You might have heard of Hyper-Threading, which is an implementation of SMT. Both increase contention on processor resources, and it's recommended to turn them off if you want to reduce jitter caused by resource contention. NixOS docs note that disabling SMT supplements the L1 data cache flushing mitigation against malicious VM guests, since SMT can expose data flushed from one thread's cache to a sibling thread running on the same physical core.
+        """Allows multiple execution threads to be executed on a single physical CPU core. Basically, 2 virtual cores per core as opposed to one, allowing for double the processes per core. You might have heard of Hyper-Threading, which is an implementation of SMT. Both increase contention on processor resources, and it's recommended to turn them off if you want to reduce jitter caused by resource contention. NixOS docs note that disabling SMT supplements the L1 data cache flushing mitigation against malicious VM guests, since SMT can expose data flushed from one thread's cache to a sibling thread running on the same physical core. In addition, the Ardour Manual states that a process that uses hyperthreading will be less stable in very low latency situations than one without.
 
-The control state reflects how SMT is being managed: on means SMT is supported and fully enabled, off means it's supported but disabled (only primary threads can be brought online), forceoff is the same as off but cannot be changed at runtime, and notsupported means the CPU has no SMT capability. The active status reports whether SMT is actually running, like whether any physical core currently has two or more sibling threads online. For more info on SMT control states see the first link in the sources. """,
+The control state reflects how SMT is being managed: on means SMT is supported and fully enabled, off means it's supported but disabled (only primary threads can be brought online), forceoff is the same as off but cannot be changed at runtime, and notsupported means the CPU has no SMT capability. The active status reports whether SMT is actually running — i.e. whether any physical core currently has two or more sibling threads online. For more info on SMT control states see the first link in the sources. """,
         [
             "https://access.redhat.com/solutions/rhel-smt",
             "https://rigtorp.se/low-latency-guide/",
             "https://access.redhat.com/solutions/rhel-smt",
             "https://mynixos.com/nixpkgs/option/security.allowSimultaneousMultithreading",
             "https://en.wikipedia.org/wiki/Hyper-threading",
+            "https://manual.ardour.org/setting-up-your-system/the-right-computer-system-for-digital-audio/",
+        ],
+
+    ),
+    "soundIrqSharing": (
+        """Each sound card should have its own exclusive IRQ (Interrupt Request) line. When multiple devices share the same IRQ, the kernel must call all registered interrupt handlers whenever any device on that line triggers an interrupt. This creates additional latency and jitter as each handler must check if the interrupt belongs to its device, and the audio handler may be delayed while other devices handlers are processed. For real-time audio, this can cause xruns and audio dropouts. Ideally, your audio interface should have exclusive access to its IRQ for optimal low-latency performance.""",
+        [
+            "https://maxedtech.com/show-devices-by-irq-in-windows/",
+            "https://wiki.linuxaudio.org/wiki/system_configuration#do_i_really_need_a_real-time_kernel",
+            "https://unix.stackexchange.com/questions/47306/how-does-the-linux-kernel-handle-shared-irqs",
+            "https://docs.kernel.org/core-api/irq/concepts.html",
+
         ],
 
     ),

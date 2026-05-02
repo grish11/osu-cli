@@ -10,13 +10,7 @@ class VariableDetailScreen(Screen):
     BINDINGS = [("escape", "app.pop_screen", "Back")]
     CSS_PATH = "variableDetail.tcss"
 
-    def __init__(
-        self,
-        variableKey: str,
-        displayLabel: str,
-        currentValue: str,
-        source: str,
-    ) -> None:
+    def __init__(self, variableKey: str, displayLabel: str, currentValue: str, source: str,) -> None:
         super().__init__()
         self.variableKey = variableKey
         self.displayLabel = displayLabel
@@ -24,9 +18,7 @@ class VariableDetailScreen(Screen):
         self.source = source
 
     def compose(self) -> ComposeResult:
-        text, urls = EXPLANATIONS.get(
-            self.variableKey, ("No explanation available.", [])
-        )
+        text, urls = EXPLANATIONS.get( self.variableKey, ("No explanation available.", []))
         yield Header(show_clock=True)
         with Vertical(id="detail-box"):
             with Horizontal(id="detail-header"):

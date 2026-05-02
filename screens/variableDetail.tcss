@@ -22,9 +22,10 @@ Screen {
 }
 
 #detail-value {
-    width: auto;
+    width: 80%;
     color: #d8bfd8;
     margin-left: 1;
+    text-overflow: fold;
 }
 
 #detail-text {
