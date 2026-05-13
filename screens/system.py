@@ -322,9 +322,8 @@ def getUserLimits() -> dict[str, str]:
     return result
 
 
-# ---------------------------------------------------------------------------------------------------
+# gets info from functions, and returns list for the data table
 def getSystemInfo() -> dict[str, str]:
-    """Reads every system-latency-relevant variable in one shot."""
     kernelParams = getKernelParams()
     limits = getUserLimits()
     return {

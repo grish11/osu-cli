@@ -13,7 +13,7 @@ Screen {
 
 #box {
     border: ascii $accent #fffaf0;
-    height: 10;
+    height: 15;
     width: 75;
     margin-top: 2;
 }
@@ -30,6 +30,13 @@ Screen {
     height: auto;
     align: center middle;
     margin-top: 1;
+}
+
+#box #hyprLabel {
+    width: auto;
+    text-align: left;
+    text-style: none;
+    padding: 1 0 0 0;
 }
 
 Button:focus {

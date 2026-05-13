@@ -7,6 +7,7 @@ from textual.reactive import reactive
 from screens.audio import AudioLatencyScreen
 from screens.system import SystemLatencyScreen
 from screens.osu import OsuLatencyScreen
+from screens.display import DisplayLatencyScreen
 
 LOGO = r"""
                .x+=:.                       s                              
@@ -36,6 +37,7 @@ class osuLatencyApp(App):
         "audio": AudioLatencyScreen,
         "system": SystemLatencyScreen,
         "osu": OsuLatencyScreen,
+        "display": DisplayLatencyScreen,
     }
 
     def compose(self) -> ComposeResult:
@@ -44,11 +46,14 @@ class osuLatencyApp(App):
         with Vertical(id="box"):
             yield Label(
                 "Click the buttons below to test your system's latency against osu!lazer. Make sure osu!lazer is running in the background! To understand the variable try clicking on its row for MY definition with sources, I can make mistakes!"
-            )
+            , id="info-text")
             with Horizontal():
                 yield Button("Audio", id="audio", flat=True)
                 yield Button("System", id="system", flat=True)
                 yield Button("Osu", id="osu", flat=True)
+            with Horizontal(): 
+                yield Label("Hyprland Specific Display Info:", id="hyprLabel")
+                yield Button("Display", id="display", flat=True)
         yield Footer()
 
     def on_mount(self) -> None:

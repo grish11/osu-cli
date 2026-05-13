@@ -83,7 +83,9 @@ Generic kernels can also be improved by enabling the threadirqs boot option, whi
 
 Deeper states take longer to wake up, sometimes even hundreds of microseconds. When an audio event fires while the CPU is in a deep C-state, the CPU has to "warm-up" before it can respond, which may cause xruns.
 
-An example of implementation would be, processor.max_cstate=N, where N specifies the kernel to only use C-states from C0 to CN. Also, the max C-states is determined by the type of CPU too. Cool fun fact, that when a CPU is constrained from being put into an available idle state, the CPU will execute more or less useless instructions in a loop until it is assigned a new task to run lol. Overall, by setting a max to the C-state the cores can be at, eliminates the latency spikes at the cost of higher power and heat.""",
+An example of implementation would be, processor.max_cstate=N, where N specifies the kernel to only use C-states from C0 to CN. Also, the max C-states is determined by the type of CPU too. Cool fun fact, that when a CPU is constrained from being put into an available idle state, the CPU will execute more or less useless instructions in a loop until it is assigned a new task to run lol. Overall, by setting a max to the C-state the cores can be at, eliminates the latency spikes at the cost of higher power and heat.
+
+**Important, if you do not want to set this kernel boot parameter, and instead want your CPU to not be in those idle C-states, for the current session, you try following steps on the linuxaudio link shared below. They also go over managing CPU latency through the management of udev rules, so if interested in this possibility unlike the permanent kernel boot param check them out.""",
         [
             "https://wiki.linuxaudio.org/wiki/system_configuration#quality_of_service_interface",
             "https://docs.kernel.org/admin-guide/pm/cpuidle.html",
@@ -162,5 +164,25 @@ The control state reflects how SMT is being managed: on means SMT is supported a
         ],
 
     ),
+    "refreshRate":(
+        """The number of times per second that a display device (a screen, monitor,..) displays a new image. This is dependent on the frame rate, which describes how many images are stored/generated every second by the device driving the display. It is measured in Hertz (Hz). For example, if your display has a refresh rate of 144Hz, it is refreshing the image 144 times per second. A higher refresh rate is the result of smoother gameplay, or video streaming, but the frame rate which is the sole driver of refreshRate is dependent on the CPU/GPU supplying the monitor with a high number/max frames for your display. In Osu’s case, it is a CPU intensive game, therefore it requires a higher workload on the CPU.""",
+        [
+            "https://en.wikipedia.org/wiki/Refresh_rate",
+            "https://www.intel.com/content/www/us/en/gaming/resources/highest-refresh-rate-gaming.html",
+
+        ],
+    ),
+    "vrr":(
+        """otherwise known as Variable Refresh Rate, is a dynamic display technology that synchronizes your monitor's refresh rate with the frame rate produced by your computer. Instead of refreshing your screen at a fixed interval, the monitor dynamically adjusts refresh timing to match each frame as it is rendered. For example, if you are playing osu at 123fps the monitor will match that with the refresh rate. This helps with screen tearing issues, and can make the game appear more smoother and consistent. Your certain display, if it has VRR capabilities, supports a range of refresh rates (like 40Hz-120Hz). It is said to increase ~1ms of input latency, and that makes sense as it takes time for the monitor to adjust refresh timing. This setting, if applicable on your display, could help stabilize gameplay and make it more smoother and add small latency.
+
+If you would like to reduce screen tearing and don't care about the ~1ms delay VRR, could help. Interestingly enough, if you are looking into, or have V-Sync enabled (its main purpose is screen tear removal), that actually increases latency by ~15-30ms, since it actually forces the game to wait for the monitor’s next refresh.""",
+        [
+            "https://iqondigital.com/learn/pc-optimization/variable-refresh-rate",
+            "https://en.wikipedia.org/wiki/Variable_refresh_rate",
+
+        ],
+
+    ),
+
 
 }
