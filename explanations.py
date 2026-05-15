@@ -212,5 +212,23 @@ If you would like to reduce screen tearing and don't care about the ~1ms delay V
         ],
 
     ),
+    "frameSync":(""" controls how osu manages its frame output. Unlimited removes any frame cap, allowing the GPU to render as many frames as possible. Higher FPS directly reduces audio latency too, not just visual. The gains diminish quickly though, so Unlimited is mainly useful up to a point.""", 
+        [], 
+    ),
+    "windowMode":("""The type of window osu runs in. Fullscreen occupies the entire screen, Windowed is a resizable floating window, and Windowed Fullscreen is a borderless window that matches your screen size. Fullscreen has significantly lower visual latency than borderless/windowed.""", 
+        [], 
+    ),
+    "executionMode":("""controls whether osu runs its update and render loops on a single thread or splits them across multiple threads. Multithreaded reduces audio latency and improves hit registration accuracy, especially at lower framerates. Single thread has slightly lower visual latency. On Linux, audio latency is already naturally lower than other platforms, so the difference may be less noticeable.""",
+        [
+            "https://www.reddit.com/r/osugame/comments/13j8jyz/osu_stable_lazer_latency_analysis_60144240360hz/"
+        ], 
+    ),
+    "renderer":("""The graphics API used to draw frames. On Linux, options are OpenGL and Vulkan. OpenGL is older, and Vulkan is the successor of OpenGL.""", 
+        [], 
+    ),
+    "audioOffset":("""A manually configured value that shifts when hitsounds play relative to the music, compensating for your system's audio latency. Doesn't reduce latency. """, 
+        [], 
+    ),
+
 
 }
