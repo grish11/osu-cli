@@ -165,7 +165,7 @@ The control state reflects how SMT is being managed: on means SMT is supported a
 
     ),
     "refreshRate":(
-        """The number of times per second that a display device (a screen, monitor,..) displays a new image. This is dependent on the frame rate, which describes how many images are stored/generated every second by the device driving the display. It is measured in Hertz (Hz). For example, if your display has a refresh rate of 144Hz, it is refreshing the image 144 times per second. A higher refresh rate is the result of smoother gameplay, or video streaming, but the frame rate which is the sole driver of refreshRate is dependent on the CPU/GPU supplying the monitor with a high number/max frames for your display. In Osu’s case, it is a CPU intensive game, therefore it requires a higher workload on the CPU.""",
+        """The number of times per second that a display device (a screen, monitor,..) displays a new image. This is dependent on the frame rate, which describes how many images are stored/generated every second by the device driving the display. It is measured in Hertz (Hz). For example, if your display has a refresh rate of 144Hz, it is refreshing the image 144 times per second. A higher refresh rate is the result of smoother gameplay, or video streaming, but the frame rate which is the sole driver of refreshRate is dependent on the GPU supplying the monitor with a high number/max frames for your display. In Osu’s case, it is a CPU intensive game, therefore it requires a higher workload on the CPU.""",
         [
             "https://en.wikipedia.org/wiki/Refresh_rate",
             "https://www.intel.com/content/www/us/en/gaming/resources/highest-refresh-rate-gaming.html",
@@ -181,8 +181,36 @@ If you would like to reduce screen tearing and don't care about the ~1ms delay V
             "https://en.wikipedia.org/wiki/Variable_refresh_rate",
 
         ],
+    ),
+    "activelyTearing":("""values of this variable can be true or false. This occurs when the video feed of the device is not synchronized with the display’s refresh rate. Therefore a tear line might be prevalent (horizontal split at one or more places on the screen).""", 
+        [
+            "https://www.displayninja.com/what-is-screen-tearing/",
+            "https://en.wikipedia.org/wiki/Screen_tearing",
+        ],
+    ),
+    "directScanoutTo":("""A window ID (0 if none). This is an optimization where Hyprland bypasses the compositor and lets a window’s buffer go directly to the display hardware. This shows the window which is currently being scanned out directly. 
+
+** For the definition I made, I looked through source code, on the files: solitary.cpp & Monitor.hpp""",
+        [
+            "https://github.dev/hyprwm/Hyprland",
+        ],
 
     ),
+    "directScanoutBlockedBy":("""A list, separated by commas with reasons of why direct scanout is NOT happening. Reasons could be such as: user settings, software renders/cursors, missing candidate, windowed mode, mirroring, recording, transform, DMA, color management. 
 
+** For the definition I made, I looked through source code, on the files: solitary.cpp & Monitor.hpp""",
+        [
+            "https://github.dev/hyprwm/Hyprland",
+        ],
+
+    ),
+    "solitary":("""A window ID (0 if none). A “solitary client” is a single fullscreen window that Hyprland identifies as the only thing on screen, allowing it to skip compositing certain layers for performance. The related solitaryBlockedBy shows why a window isn't being treated as solitary (ex such as windowed mode, missing candidate, notifications present, etc.)
+
+** For the definition I made, I looked through source code, on the files: solitary.cpp & Monitor.hpp""",
+        [
+            "https://github.dev/hyprwm/Hyprland",
+        ],
+
+    ),
 
 }
