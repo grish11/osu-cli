@@ -17,9 +17,9 @@
 </div>
 <br />
 
-
 <div align="center">
-  <img src="assets/osutopPreview.png" alt="Watch the video">
+  <video src="https://github.com/user-attachments/assets/cc35bfb3-84d3-411c-ae12-275f736a21cb" controls autoplay loop muted width="700">
+  </video>
 </div>
 
 ## Requirements
