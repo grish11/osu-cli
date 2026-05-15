@@ -15,10 +15,11 @@
     <b> <i> Rankings, definitions, and recommendations based on osu!lazer optimization experience and community input. Results may vary by system configuration. </i> </b>
   </p>
 </div>
-
 <br />
+
+
 <div align="center">
-  <img src="https://github.com/grish11/osutop/blob/main/assets/osuTop.png" alt="osutop preview" width="800">
+  <img src="assets/osutopPreview.png" alt="Watch the video">
 </div>
 
 ## Requirements
