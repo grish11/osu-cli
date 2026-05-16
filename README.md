@@ -28,7 +28,7 @@
 
 > If you dont see your distro, that doesnt mean this tool wont work. This just means it has not been tested and verified it is fully functional.
 > If you plan to test it if works, open an issue and I'll respond.
-> This tool does not support OS's that arent Traditional Linux -- so distros like NixOS (with different filesystem).
+> This tool relies on standard Linux filesystem paths (e.g. /sys/, /proc/), so it will not work on NixOS or Windows.
 
 
 
