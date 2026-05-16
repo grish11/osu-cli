@@ -1,5 +1,4 @@
 <div id="top"></div>
-
 <br />
 <div align="center">
   <h1 align="center">osutop</h1>
@@ -16,25 +15,32 @@
   </p>
 </div>
 <br />
-
 <div align="center">
   <video src="https://github.com/user-attachments/assets/cc35bfb3-84d3-411c-ae12-275f736a21cb" controls autoplay loop muted width="700">
   </video>
 </div>
 
-## Requirements
+## Distros Tested
 
+| Distro | Status |
+|--------|--------|
+| Fedora 43 | ✅ |
+
+> If you dont see your distro, that doesnt mean this tool wont work. This just means it has not been tested and verified it is fully functional.
+> If you plan to test it if works, open an issue and I'll respond.
+
+
+
+## Requirements
 - Python 3.10+
 - PipeWire (`pw-top`)
 - osu!lazer (optional — the osu! screen reads its config files)
 
 ## Install
-
 ```bash
 git clone https://github.com/grish11/osutop.git
 cd osutop
 ```
-
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -42,7 +48,6 @@ pip install -r requirements.txt
 ```
 
 ## Run
-
 ```bash
 python main.py
 ```
